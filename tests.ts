@@ -7,36 +7,24 @@ Deno.test("day 1", async () => {
   const text = await Deno.readTextFile('inputs/day1.txt');
   var numbers = text.split('\n').map(t => parseInt(t));
 
-  function day1part1(numbers: Array<number>) {
-    for (let i = 0; i < numbers.length; i++)
-    {
-      for (let j = i + 1; j < numbers.length; j++)
-      {
-        if (numbers[i] + numbers[j] == 2020)
-        {
-          return numbers[i] * numbers[j];
-        }
-      }
+  const day1 = (depth: number, numbers: Array<number>, index: number, values: Array<number>) : { success: boolean; mul: number } => {
+    if (values.length == depth)
+      return values.reduce((sum, next) => sum + next) == 2020
+        ? { success: true, mul: values.reduce((mul, next) => mul * next) }
+        : { success: false, mul: 0 };
+
+    while (index < numbers.length) {
+      const arr = Array.from(values);
+      arr.push(numbers[index++]);
+      const result = day1(depth, numbers, index, arr);
+      if (result.success) return result;
     }
-    return NaN;
+    return { success: false, mul: -1 };
   }
+
+  const day1part1 = (numbers: Array<number>) => day1(2, numbers, 0, []).mul;
   assertEquals(889779, day1part1(numbers));
 
-  function day1part2(numbers: Array<number>) {
-    for (let i = 0; i < numbers.length; i++)
-    {
-      for (let j = i + 1; j < numbers.length; j++)
-      {
-        for (let k = j + 1; k < numbers.length; k++)
-        {
-          if (numbers[i] + numbers[j] + numbers[k] == 2020)
-          {
-            return numbers[i] * numbers[j] * numbers[k];
-          }
-        }
-      }
-    }
-    return NaN;
-  }
+  const day1part2 = (numbers: Array<number>) => day1(3, numbers, 0, []).mul
   assertEquals(76110336, day1part2(numbers));
 })
