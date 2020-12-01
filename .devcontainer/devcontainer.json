@@ -1,0 +1,11 @@
+{
+    "name": "Deno",
+    "dockerFile": "Dockerfile",
+    "settings": { 
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "extensions": [
+        "denoland.vscode-deno"
+    ],
+	"remoteUser": "vscode"
+}
