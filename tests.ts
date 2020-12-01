@@ -14,10 +14,9 @@ Deno.test("day 1", async () => {
         : { success: false, mul: 0 };
 
     while (index < numbers.length) {
-      const arr = Array.from(values);
-      arr.push(numbers[index++]);
-      const result = day1(depth, numbers, index, arr);
-      if (result.success) return result;
+      const number = numbers[index];
+      const result = day1(depth, numbers, ++index, [number, ...values]);
+      if (result.success) return result;      
     }
     return { success: false, mul: -1 };
   }
