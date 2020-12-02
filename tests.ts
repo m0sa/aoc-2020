@@ -27,3 +27,36 @@ Deno.test("day 1", async () => {
   const day1part2 = (numbers: Array<number>) => day1(3, numbers, 0, []).mul
   assertEquals(76110336, day1part2(numbers));
 })
+
+Deno.test("day 2", async () => {
+  const input = (await Deno.readTextFile('inputs/day2.txt')).split('\n').map(t => {
+    const match = /([0-9]+)-([0-9]+) ([a-z]): ([a-z]+)/.exec(t);
+    return !match
+      ? null
+      : {
+          min: parseInt(match[1]),
+          max: parseInt(match[2]),
+          char: match[3] + '',
+          password: match[4] + ''
+      }
+  });
+  assertEquals(input[1]?.password, 'frpknnndpntnncnnnnn');
+
+  const specCheck1 = (min: number, max: number, char: string, password: string): boolean => {
+    let count = 0;
+    for (let i = 0; i < password.length; i++) {
+      count += password[i] == char ? 1 : 0;
+    }
+    return count >= min && count <= max;
+  }
+  var part1 = input.filter(spec => spec == null ? false : specCheck1(spec.min, spec.max, spec.char, spec.password) ).length;
+  assertEquals(part1, 445);
+
+  const specCheck2 = (min: number, max: number, char: string, password: string): boolean => {
+    var match1 = password[min-1] == char;
+    var match2 = password[max-1] == char;
+    return !match1 != !match2; // xor
+  }
+  var part2 = input.filter(spec => spec == null ? false : specCheck2(spec.min, spec.max, spec.char, spec.password) ).length;
+  assertEquals(part2, 491);
+});
