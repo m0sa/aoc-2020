@@ -60,3 +60,42 @@ Deno.test("day 2", async () => {
   var part2 = input.filter(spec => spec == null ? false : specCheck2(spec.min, spec.max, spec.char, spec.password) ).length;
   assertEquals(part2, 491);
 });
+
+Deno.test('day 3', async () => {
+  const countTrees = (map: string, right: number, down: number) : number => {
+    const lines = map.split('\n');
+    let treesHit = 0;
+
+    for (let y = down, x = right; y < lines.length; y += down, x += right) {
+      const line = lines[y];
+      const tile = line[x % line.length];
+      treesHit += tile == '#' ? 1 : 0;
+    }
+    return treesHit;
+  }
+  assertEquals(7, countTrees(
+`..##.......
+#...#...#..
+.#....#..#.
+..#.#...#.#
+.#...##..#.
+..#.##.....
+.#.#.#....#
+.#........#
+#.##...#...
+#...##....#
+.#..#...#.#`, 3, 1));
+
+  const map = await Deno.readTextFile('inputs/day3.txt');
+  const part1 = countTrees(map, 3, 1);
+  assertEquals(151, part1);
+
+  var part2 = [
+    [1, 1],
+    [3, 1],
+    [5, 1],
+    [7, 1],
+    [1, 2],
+  ].reduce((prev, current) => prev * countTrees(map, current[0], current[1]), 1);
+  assertEquals(7540141059, part2);
+});
