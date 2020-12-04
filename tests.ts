@@ -99,3 +99,27 @@ Deno.test('day 3', async () => {
   ].reduce((prev, current) => prev * countTrees(map, current[0], current[1]), 1);
   assertEquals(7540141059, part2);
 });
+
+Deno.test('day 4', async () => {
+  const properties = [ 'byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid', 'cid' ];
+  const parse = function(input: string) : any[] {
+    let result = [];
+    let current: any = {};
+    for(var line in input.split('\n')) {
+      if (line == "") {
+         result.push(current);
+         current = {};
+         continue;
+      }
+      for(var part in line.split(' ')) {
+        var field = part.split(':');
+        current[field[0]] = field[1];
+      }
+    }
+    return result;
+  }
+  const isValid = (passport: any) => properties.filter(p => passport[p]).length == properties.length;
+  const passports = parse(await Deno.readTextFile('input/day4.txt'));
+
+  assertEquals(0, passports.filter(isValid).length);
+});
