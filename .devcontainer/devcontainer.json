@@ -5,7 +5,8 @@
         "terminal.integrated.shell.linux": "/bin/bash"
     },
     "extensions": [
-        "denoland.vscode-deno"
+        "denoland.vscode-deno",
+        "ms-azuretools.vscode-docker"
     ],
 	"remoteUser": "vscode"
 }

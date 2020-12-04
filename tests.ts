@@ -101,25 +101,48 @@ Deno.test('day 3', async () => {
 });
 
 Deno.test('day 4', async () => {
-  const properties = [ 'byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid', 'cid' ];
+  const properties = [ 'byr', 'iyr', 'eyr', 'hgt', 'hcl', 'ecl', 'pid' ];
   const parse = function(input: string) : any[] {
-    let result = [];
+    let result : any[] = [];
     let current: any = {};
-    for(var line in input.split('\n')) {
+    input.split('\n').forEach(line => {
       if (line == "") {
          result.push(current);
          current = {};
-         continue;
+         return;
       }
-      for(var part in line.split(' ')) {
+      line.split(' ').forEach(part => {
         var field = part.split(':');
         current[field[0]] = field[1];
-      }
-    }
+      });
+    })
     return result;
   }
-  const isValid = (passport: any) => properties.filter(p => passport[p]).length == properties.length;
-  const passports = parse(await Deno.readTextFile('input/day4.txt'));
+  const isValid1 = (passport: any) => properties.filter(p => passport[p]).length == properties.length;
+  const passports = parse(await Deno.readTextFile('inputs/day4.txt'));
 
-  assertEquals(0, passports.filter(isValid).length);
+  assertEquals(256, passports.filter(isValid1).length);
+
+  const isValid2 = (passport: any) => {
+      const byr = parseInt(passport.byr);
+      const iyr = parseInt(passport.iyr);
+      const eyr = parseInt(passport.eyr);
+      const hgt = parseInt(passport.hgt);
+      const hgtStr = passport.hgt || '';
+      const hgtU = hgtStr.length > 2 ? hgtStr.substring(hgtStr.length-2) : '';
+
+      return true &&
+        byr >= 1920 && byr <= 2002 && byr + "" == passport.byr &&
+        iyr >= 2010 && iyr <= 2020 && iyr + "" == passport.iyr &&
+        eyr >= 2020 && eyr <= 2030 && eyr + "" == passport.eyr &&
+        (
+          (hgtU == 'in' && hgt >= 59 && hgt <= 76)
+          ||
+          (hgtU == 'cm' && hgt >= 150 && hgt <= 193)
+        ) && hgt + "" + hgtU == passport.hgt &&
+        /^#[a-f0-9]{6}$/.test(passport.hcl) &&
+        /^amb|blu|brn|gry|grn|hzl|oth$/.test(passport.ecl) &&
+        /^[0-9]{9}$/.test(passport.pid);
+  };
+  assertEquals(198, passports.filter(isValid2).length);
 });
