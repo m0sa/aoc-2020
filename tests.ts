@@ -1,5 +1,5 @@
+// deno-lint-ignore-file no-explicit-any
 import {
-  assert,
   assertArrayIncludes,
   assertEquals,
 } from "https://deno.land/std@0.79.0/testing/asserts.ts";
@@ -139,7 +139,7 @@ Deno.test("day 3", async () => {
 Deno.test("day 4", async () => {
   const properties = ["byr", "iyr", "eyr", "hgt", "hcl", "ecl", "pid"];
   const parse = function (input: string): any[] {
-    let result: any[] = [];
+    const result: any[] = [];
     let current: any = {};
     input.split("\n").forEach((line) => {
       if (line == "") {
@@ -232,4 +232,48 @@ Deno.test("day 5", async () => {
   }
 
   assertEquals(743, part2);
+});
+
+Deno.test('day 6', async () => {
+
+  const parseInput = function* (input: string) {
+    let answers : string[][] = [];
+    let answerSet : Set<string> = new Set();
+    const lines = input.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      if (line == '') {
+        yield { answers, answerSet };
+        answers = [];
+        answerSet = new Set(); 
+      } else {
+        const lineSplit = line.split('');
+        answers.push(lineSplit);
+        lineSplit.forEach(a => answerSet.add(a));
+      }
+    }
+  };
+
+  const part1 = (input: string) : number => {
+    return Array.from(parseInput(input)).reduce((agg, next) => agg + next.answerSet.size, 0);
+  }
+  const example = "abc\n\na\nb\nc\n\nab\nac\n\na\na\na\na\n\nb\n";
+  assertEquals(11, part1(example));
+
+  const input = await Deno.readTextFile('inputs/day6.txt');
+  assertEquals(6885, part1(input));
+
+  const part2 = (input: string) : number => {
+    let sum = 0;
+    Array.from(parseInput(input)).forEach(group => {
+      const answerCounts : any = {};
+      group.answers.forEach(answers => answers.forEach(a =>
+        answerCounts[a] = (answerCounts[a] || 0) + 1
+      ));
+      group.answerSet.forEach(a => sum += group.answers.length == answerCounts[a] ? 1 : 0)
+    })
+    return sum;
+  }
+  assertEquals(6, part2(example));
+  assertEquals(3550, part2(input));
 });
