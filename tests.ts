@@ -277,3 +277,65 @@ Deno.test('day 6', async () => {
   assertEquals(6, part2(example));
   assertEquals(3550, part2(input));
 });
+
+Deno.test('day 7', async () => {
+  const parseLuggageSpecs = (input: string): any => {
+    const map : any = {};
+
+    const lines = input.split('\n');
+    for (let i = 0; i < lines.length; i++)
+    {
+      const line = lines[i];
+      const match = line.match(/^(?<color>[a-z ]+) bags contain /);
+      const outer = match?.groups?.color || '';
+
+      map[outer] = {};
+      [...line.matchAll(/(?<number>[0-9]+) (?<color>[a-z ]+) bags?/gm)].forEach(m =>
+        map[outer][m.groups?.color || ""] = parseInt(m.groups?.number || ''));
+    }
+
+    return map;
+  }
+  const input = parseLuggageSpecs(await Deno.readTextFile('inputs/day7.txt'));
+  const example1 = parseLuggageSpecs(
+`light red bags contain 1 bright white bag, 2 muted yellow bags.
+dark orange bags contain 3 bright white bags, 4 muted yellow bags.
+bright white bags contain 1 shiny gold bag.
+muted yellow bags contain 2 shiny gold bags, 9 faded blue bags.
+shiny gold bags contain 1 dark olive bag, 2 vibrant plum bags.
+dark olive bags contain 3 faded blue bags, 4 dotted black bags.
+vibrant plum bags contain 5 faded blue bags, 6 dotted black bags.
+faded blue bags contain no other bags.
+dotted black bags contain no other bags.`);
+
+  const canFitInto = (map: any, outer: string, inner: string): boolean => 
+    Object.getOwnPropertyNames(map[outer]).filter(p => p == inner || canFitInto(map, p, inner)).length > 0;
+  const part1 = (map: any) : number =>  
+    Object.getOwnPropertyNames(map).filter(bagColor => canFitInto(map, bagColor, "shiny gold")).length;
+
+  assertEquals(4, part1(example1));
+  assertEquals(211, part1(input));
+
+  const example2 = parseLuggageSpecs(
+`shiny gold bags contain 2 dark red bags.
+dark red bags contain 2 dark orange bags.
+dark orange bags contain 2 dark yellow bags.
+dark yellow bags contain 2 dark green bags.
+dark green bags contain 2 dark blue bags.
+dark blue bags contain 2 dark violet bags.
+dark violet bags contain no other bags.`);
+
+  const innerCount = (map: any, color: string): number =>
+    Object.getOwnPropertyNames(map[color]).reduce((agg, inner) => agg + map[color][inner] + map[color][inner] * innerCount(map, inner), 0);
+  assertEquals(0, innerCount(example2, "dark violet"));
+  assertEquals(2, innerCount(example2, "dark blue"));
+  assertEquals(6, innerCount(example2, "dark green"));
+
+  const part2 = (map: any): number =>
+    innerCount(map, "shiny gold");
+
+  assertEquals(32, part2(example1));
+  assertEquals(126, part2(example2));
+  assertEquals(-1, part2(input));
+});
+
