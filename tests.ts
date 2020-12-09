@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import {
+    assert,
     assertArrayIncludes,
     assertEquals,
   } from "https://deno.land/std@0.79.0/testing/asserts.ts";
@@ -99,3 +100,47 @@ acc +6`;
     assertEquals(846, part2(input));
 });
 
+Deno.test('day 9', async () => {
+    const ranges = function* (maxLength: number) {
+        for (let i = 0; i < maxLength; i++) {
+            for (let j = i; j < maxLength; j++) {
+                if (i == j) continue;
+                yield { start: i, end: j };
+            }
+        }
+    } 
+
+    const part1 = (preamble: number, sequence: number[]) : number => {
+        const preambleRanges = Array.from(ranges(preamble));
+        for (let i = preamble; i < sequence.length; i++) {
+            const current = sequence[i];
+            const currentPreamble = sequence.slice(i - preamble, i);
+            const isValid = preambleRanges
+                .filter(range => currentPreamble[range.start] + currentPreamble[range.end] == current)
+                .length > 0;
+            if (!isValid)
+                return current;
+        }
+        throw "sequence is valid";
+    }
+    const example = [ 35, 20, 15, 25, 47, 40, 62, 55, 65, 95, 102, 117, 150, 182, 127, 219, 299, 277, 309, 576 ];
+    assertEquals(127, part1(5, example));
+
+    const input = (await Deno.readTextFile('inputs/day9.txt')).split('\n').map(line => parseInt(line));
+    assertEquals(36845998, part1(25, input));
+
+    const part2 = (preamble: number, sequence: number[]) : number => {
+        const target = part1(preamble, sequence);
+        const allRanges = Array.from(ranges(sequence.length));
+        for (let r = 0; r < allRanges.length; r++) {
+            const range = allRanges[r];
+            const slice = sequence.slice(range.start, range.end);
+            if (target == slice.reduce((agg, next) => agg + next, 0)) {
+                return slice.sort((a, b) => a-b)[0] + slice.sort((a, b) => b-a)[0];
+            }
+        }
+        throw "no solution found";
+    }
+    assertEquals(62, part2(5, example));
+    assertEquals(4830226, part2(25, input));
+})
