@@ -144,3 +144,37 @@ Deno.test('day 9', async () => {
     assertEquals(62, part2(5, example));
     assertEquals(4830226, part2(25, input));
 })
+
+Deno.test('day 10', async () => {
+    const example1 = [16, 10, 15, 5, 1, 11, 7, 19, 6, 12, 4];
+    const example2 = [28, 33, 18, 42, 31, 14, 46, 20, 48, 47, 24, 23, 49, 45, 19, 38, 39, 11, 1, 32, 25, 35, 8, 17, 7, 9, 4, 2, 34, 10, 3];
+    const input = (await Deno.readTextFile('inputs/day10.txt')).split('\n').map(x => parseInt(x));
+
+    const part1 = (input: number[]) : number => {
+        const sorted = [0, ...input.sort((a, b) => a - b), Math.max(...input) + 3]
+        const deltas = [0, 0, 0, 0];
+        for (let i = 0; i < sorted.length - 1; i++) {
+            const current = sorted[i];
+            const next = sorted[i + 1];
+            deltas[next-current] += 1;
+        }
+        return deltas[1] * deltas[3];
+    };
+    assertEquals(part1(example1), 7 * 5);
+    assertEquals(part1(example2), 22 * 10);
+    assertEquals(part1(input), 1755);
+
+    const part2 = (input: number[]) : number => {
+        const sorted = [0, ...input.sort((a, b) => a - b)];
+        const pathsInto = [1, ...input.map(_ => 0)];
+        for (let i = 1; i < sorted.length; i++) {
+            for (let j = i - 1; j >= 0 && sorted[i] - sorted[j] < 4 ; j--) {
+                pathsInto[i] += pathsInto[j];
+            }
+        }
+        return pathsInto.pop() || 0;
+    }
+    assertEquals(part2(example1), 8);
+    assertEquals(part2(example2), 19208);
+    assertEquals(part2(input), 4049565169664);
+});
