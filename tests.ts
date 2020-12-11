@@ -178,3 +178,84 @@ Deno.test('day 10', async () => {
     assertEquals(part2(example2), 19208);
     assertEquals(part2(input), 4049565169664);
 });
+
+Deno.test('day 11', async () => {
+    const example =
+`L.LL.LL.LL
+LLLLLLL.LL
+L.L.L..L..
+LLLL.LL.LL
+L.LL.LL.LL
+L.LLLLL.LL
+..L.L.....
+LLLLLLLLLL
+L.LLLLLL.L
+L.LLLLL.LL`;
+    const input = await Deno.readTextFile('inputs/day11.txt');
+    const isInBounds = (map: string[], line: number, row: number) =>
+        line >= 0 && line < map.length &&
+        row >= 0 && row < map[0].length;
+    const countOccupied = (seats: string[]) => seats.filter(s => s == '#').length;
+    const round = (state: string, tolerance: number, adjecent: (map: string[], line: number, row: number) => string[]) : string => {
+        const map = state.split('\n');
+        const result = state.split('\n').map(l => l.split(''));
+        for (let line = 0; line < map.length; line ++) {
+            for (let row = 0; row < map[line].length; row++) {
+                const adjecentOccupied = countOccupied(adjecent(map, line, row));
+                result[line][row] =
+                    map[line][row] == 'L' && adjecentOccupied == 0 ? '#' :
+                    map[line][row] == '#' && adjecentOccupied >= tolerance ? 'L' :
+                    map[line][row];
+            }
+        }
+        return result.map(l => l.join('')).join('\n');
+    }
+    const stabilize = (map: string, round: (map: string) => string) => {
+        while(true) {
+            const newMap = round(map);
+            if (newMap == map) return map;
+            map = newMap;
+        }
+    };
+
+    const directions = [
+        [ 1, -1],
+        [ 1,  0],
+        [ 1,  1],
+        [-1, -1],
+        [-1,  0],
+        [-1,  1],
+        [ 0, -1],
+        [ 0,  1],
+    ];
+    const adjecent1 = (map: string[], line: number, row: number) : string[] =>
+        directions
+        .map(pos => [ line + pos[0], row + pos[1] ])
+        .filter(pos => isInBounds(map, pos[0], pos[1]))
+        .map(pos => map[pos[0]][pos[1]]);
+    const part1 = (map: string) : number => countOccupied([...stabilize(map, m => round(m, 4, adjecent1))]);
+    assertEquals(part1(example), 37);
+    assertEquals(part1(input), 2289);
+
+    const adjecent2 = (map: string[], line: number, row: number) => {
+        const result = [];
+        for (const direction of directions) {
+            let current = [line, row];
+            while (true) {
+                current = [ current[0] + direction[0], current[1] + direction[1] ];
+                if (!isInBounds(map, current[0], current[1])) {
+                    break;
+                }
+                const tile = map[current[0]][current[1]];
+                if (tile != '.') {
+                    result.push(tile);
+                    break;
+                }
+            }
+        }
+        return result;
+    }
+    const part2 = (map: string) : number => countOccupied([...stabilize(map, m => round(m, 5, adjecent2))]);
+    assertEquals(part2(example), 26);
+    assertEquals(part2(input), 2059);
+})
