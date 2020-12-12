@@ -258,4 +258,68 @@ L.LLLLL.LL`;
     const part2 = (map: string) : number => countOccupied([...stabilize(map, m => round(m, 5, adjecent2))]);
     assertEquals(part2(example), 26);
     assertEquals(part2(input), 2059);
-})
+});
+
+Deno.test('day 12', async () => {
+    const example = 'F10\nN3\nF7\nR90\nF11';
+    const input = await Deno.readTextFile('inputs/day12.txt');
+    interface Vector2D { readonly x: number; readonly y: number; }
+    const Manhattan = (v: Vector2D) => Math.abs(v.x) + Math.abs(v.y);
+
+    const part1 = (input: string): number => {
+        const result = input.split('\n').reduce((state, line) => {
+            const parameter = parseInt(line.slice(1));
+            switch (line[0]) {
+                case 'N': return { x: state.x, y: state.y + parameter, b: state.b };
+                case 'S': return { x: state.x, y: state.y - parameter, b: state.b };
+                case 'W': return { x: state.x - parameter, y: state.y, b: state.b };
+                case 'E': return { x: state.x + parameter, y: state.y, b: state.b };
+                case 'L': return { x: state.x, y: state.y, b: state.b - parameter };
+                case 'R': return { x: state.x, y: state.y, b: state.b + parameter };
+                case 'F': switch ((state.b + 10 * 360) % 360) {
+                    case 0:   return { x: state.x, y: state.y + parameter, b: state.b };
+                    case 90:  return { x: state.x + parameter, y: state.y, b: state.b };
+                    case 180: return { x: state.x, y: state.y - parameter, b: state.b };
+                    case 270: return { x: state.x - parameter, y: state.y, b: state.b };
+                    default: throw `unexpected bearing ${state.b}`;
+                }
+                default: throw `unexpected instruction ${line[0]}`;
+            }
+        }, { x: 0, y: 0, b: 90 });
+
+        return Manhattan(result);
+    };
+    assertEquals(part1(example), 25);
+    assertEquals(part1(input), 562);
+
+    const part2 = (input: string): number => {
+        const Add = (a: Vector2D, b: Vector2D) : Vector2D => { return { x: a.x + b.x, y: a.y +  b.y }; }
+        const Mul = (a: Vector2D, b: number) : Vector2D => { return { x: a.x * b, y: a.y * b }; }
+        const Vec = (x: number, y: number) : Vector2D => { return { x, y }; }
+        const Clockwise = (v: Vector2D, deg: number) : Vector2D => {
+            switch ((deg + 720) % 360) {
+                case  90: return Vec( v.y, -v.x);
+                case 270: return Vec(-v.y,  v.x);
+                case 180: return Vec(-v.x, -v.y);
+                default: throw `unexpected rotation: ${deg}`;
+            }
+        }
+        const CounterClockwise = (v: Vector2D, deg: number) => Clockwise(v, -deg);
+        const result = input.split('\n').reduce((state, line) => {
+            const parameter = parseInt(line.slice(1));
+            switch (line[0]) {
+                case 'N': return { s: state.s, w: Add(state.w, Vec(0,  parameter)) };
+                case 'S': return { s: state.s, w: Add(state.w, Vec(0, -parameter)) };
+                case 'W': return { s: state.s, w: Add(state.w, Vec(-parameter, 0)) };
+                case 'E': return { s: state.s, w: Add(state.w, Vec( parameter, 0)) };
+                case 'R': return { s: state.s, w: Clockwise(state.w, parameter) };
+                case 'L': return { s: state.s, w: CounterClockwise(state.w, parameter) };
+                case 'F': return { s: Add(state.s, Mul(state.w, parameter)), w:state.w };
+                default: throw `unexpected instruction ${line[0]}`;
+            }
+        }, { s: Vec(0, 0), w: Vec(10, 1) });
+        return Manhattan(result.s);
+    };
+    assertEquals(part2(example), 286);
+    assertEquals(part2(input), 101860);
+});
