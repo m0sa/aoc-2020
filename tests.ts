@@ -346,7 +346,7 @@ Deno.test('day 13', async () => {
     assertEquals(part1(example), 295);
     assertEquals(part1(input), 138);
 
-    const modInverse = (a: number, m: number) : number => {
+    const modInverse = (a: bigint, m: bigint) : bigint => {
         // gcd
         const s = []
         for (let b = m; b; ) {
@@ -355,31 +355,29 @@ Deno.test('day 13', async () => {
         }
 
         // find the inverse mod
-        let [x, y] = [1, 0];
+        let [x, y] = [1n, 0n];
         for (let i = s.length - 2; i >= 0; --i) {
-            [x, y] = [y,  x - y * Math.floor(s[i].a / s[i].b)];
+            [x, y] = [y,  x - y * (s[i].a / s[i].b)];
         }
-        return (y + 2 * m) % m;
+        return (y + 2n * m) % m;
     }
-    const chineseRemainders = (cases: { modulo: number, remainder: number }[]): number => {
-        const prod = cases.reduce((agg, next) => agg * next.modulo, 1);
-        // console.log(`ChineseRemainders[{${cases.map(x => x.remainder).join(',')}}, {${cases.map(x => x.modulo).join(',')}}]`); // wolfram alpha
-        return cases.slice(1).reduce((agg, next) => {
+    const chineseRemainders = (cases: { modulo: bigint, remainder: bigint }[]): bigint => {
+        const prod = cases.reduce((agg, next) => agg * next.modulo, 1n);
+        return cases.reduce((agg, next) => {
             const n = prod / next.modulo;
-            const mi = modInverse(n, next.modulo);
-            return (agg + (next.remainder * n * mi)) % prod;
-        }, 0);
+            return (agg + (next.remainder * n * modInverse(n, next.modulo))) % prod;
+        }, 0n);
     }
     const part2 = (input: string) => chineseRemainders(input.split('\n')[1].split(',')
-            .map((value, index) => { return { index: index, lineId: parseInt(value) } })
-            .filter(x => x.lineId > 0)
-            .map(x => { return { modulo: x.lineId, remainder: ((x.lineId * 4) - x.index) % x.lineId } }));
+            .map((value, index) => { return { index: BigInt(index), lineId: value == 'x' ? 0n : BigInt(value) } })
+            .filter(x => x.lineId > 0n)
+            .map(x => { return { modulo: x.lineId, remainder: ((x.lineId * 4n) - x.index) % x.lineId } }));
 
-    assertEquals(part2('\n17,x,13,19'),            3417);
-    assertEquals(part2('\n67,7,59,61'),          754018);
-    assertEquals(part2('\n67,x,7,59,61'),        779210);
-    assertEquals(part2(example),                1068781);
-    assertEquals(part2('\n67,7,x,59,61'),       1261476);
-    assertEquals(part2('\n1789,37,47,1889'), 1202161486);
-    // assertEquals(part2(input),          226845233210288); // ChineseRemainders[{0,26,554,4,6,12,353,24,9}, {17,37,571,13,23,29,401,41,19}]
+    assertEquals(part2('\n17,x,13,19'),            3417n);
+    assertEquals(part2('\n67,7,59,61'),          754018n);
+    assertEquals(part2('\n67,x,7,59,61'),        779210n);
+    assertEquals(part2(example),                1068781n);
+    assertEquals(part2('\n67,7,x,59,61'),       1261476n);
+    assertEquals(part2('\n1789,37,47,1889'), 1202161486n);
+    assertEquals(part2(input),          226845233210288n);
 });
