@@ -132,58 +132,31 @@ nearby tickets:
     assertEquals(part1(example1), 71);
     assertEquals(part1(input), 26980);
 
-    function* permute<T>(source: T[], isFeasible: (permutation:T[]) => number | null) {
-        function* p(valueSoFar: T[], options: T[]) : Generator<T[], void, unknown> {
-            if (options.length == 0)  {
-                yield valueSoFar;
-            } else {
-                let isPrefixValid = true;
-                if (valueSoFar.length > 0) {
-                    // check if the prefix is feasible
-                    const failsAt = isFeasible([...valueSoFar, ...options]);
-                    isPrefixValid = failsAt === null || failsAt >= valueSoFar.length;
-                    // console.log('prefix', valueSoFar.join(), isPrefixValid ? 'valid' : 'invalid at', failsAt);
-                }
-                if (isPrefixValid) {
-                    // console.log('valid prefix', valueSoFar.join())
-                    for (let i = 0; i < options.length; i++) {
-                        yield* p([...valueSoFar, options[i]], [...options.slice(0, i), ...options.slice(i+1)])
-                    }
-                } else {
-                    // console.log('pruning', valueSoFar.join());
-                }
-            }
-        }
-        yield* p([], source);
-    }
     const part2 = (input: string) : number => {
         const scan = parseInput(input);
         const validTickets = scan.tickets.filter(ticket => outOfAnyRangeNumbers(ticket, scan.fields).length == 0);
         const myTicket = validTickets[0];
-        const validatePermuzation = (fieldPermutation: number[]) : number | null => {
-            for (let pfi = 0; pfi < fieldPermutation.length; pfi++) {
-                const f = fieldPermutation[pfi];
-                const field = scan.fields[f];
-                const invalidOnTicketIndex = validTickets.findIndex(ti => !isNumberValidForField(ti[pfi], field));
-                if (invalidOnTicketIndex >= 0) {
-                    return pfi; // invalid permutation field index
-                }
-            }
-            return null;
-        }
 
-        for (const fieldPermutation of permute([...scan.fields.keys()], validatePermuzation)) {
-            const val = validatePermuzation(fieldPermutation)
-            if (val === null)
-            {
-                return fieldPermutation.reduce((agg, f) => agg *=
-                    scan.fields[f].name.startsWith('departure')
-                     ? myTicket[f]
-                     : 1,
-                     1)
-            }
-        }
-        return -1;
+        // get potential fields that are valid on each index
+        const isFieldValidForPosition = (position: number, field: { name: string, ranges: number[][] }) => validTickets.findIndex(ticket => !isNumberValidForField(ticket[position], field)) == -1;
+        const fieldPositionOptions = myTicket.map((_,ticketFieldIndex) => scan.fields.map((field, index) => ({ field, index })).filter(x => isFieldValidForPosition(ticketFieldIndex, x.field)).map(x => x.index));
+
+        // sort by positions by number of options (there's a single possibile result for the inputs in this exercise)
+        const result = fieldPositionOptions
+            .map((options, index) => ({options, index}))
+            .sort((a, b) => a.options.length - b.options.length)
+            .reduce((picks, fpo) => {
+                picks[fpo.index] = fpo.options.filter(newPick => picks.indexOf(newPick) == -1)[0];
+                return picks;
+            }, new Array<number>(myTicket.length));
+
+        return result
+            .map((fieldIndex, ticketIndex) => ({ fieldIndex, ticketIndex }))
+            .reduce((agg, x) =>
+                agg * (scan.fields[x.fieldIndex].name.startsWith('departure')
+                    ? myTicket[x.ticketIndex]
+                    : 1)
+                , 1);
     }
 
     assertEquals(part2(
@@ -197,7 +170,6 @@ your ticket:
 nearby tickets:
 3,9,18
 15,1,5
-5,14,9`), 11);
-    // TODO still takes ages, try different approach (find possible valid positions for each field), use that for pruning
-    // assertEquals(part2(input), -2);
+5,14,9`), 12);
+    assertEquals(part2(input), 3021381607403);
 })
